@@ -128,6 +128,27 @@
       <label for="prompt-output"><strong>Generated prompt:</strong></label>
       <textarea id="prompt-output" rows="8" style="width: 100%; font-family: monospace;"></textarea>
     </div>
+
+    <hr />
+
+    <div class="row">
+      <label for="model-select"><strong>LLM Model:</strong></label>
+      <select id="model-select">
+        <option value="gpt-oss:120b-cloud">gpt-oss:120b-cloud</option>
+        <option value="mistral">mistral</option>
+        <option value="phi3">phi3</option>
+        <option value="mixtral">mixtral</option>
+      </select>
+      <label for="batch-size" style="margin-left:2em;"><strong>Batch size:</strong></label>
+      <input type="number" id="batch-size" min="1" max="100" value="10" style="width:4em;">
+      <button id="run-classify-btn">Run Classification</button>
+    </div>
+
+    <div class="row">
+      <div id="classify-status"></div>
+    </div>
+
+    <div class="table-container" id="classified-table-container"></div>
   </div>
 
   <script>
@@ -143,6 +164,79 @@
   let currentColumns = [];
   let currentRows = [];
   let currentTopics = [];
+  let classifiedRows = [];
+  const modelSelect = document.getElementById("model-select");
+  const batchSizeInput = document.getElementById("batch-size");
+  const runClassifyBtn = document.getElementById("run-classify-btn");
+  const classifyStatus = document.getElementById("classify-status");
+  const classifiedTableContainer = document.getElementById("classified-table-container");
+  function renderClassifiedTable(columns, rows) {
+    if (!columns || columns.length === 0 || !rows || rows.length === 0) {
+      classifiedTableContainer.innerHTML = "<p>No classified data yet.</p>";
+      return;
+    }
+    let html = "<table><thead><tr>";
+    for (const col of columns) {
+      html += `<th>${col}</th>`;
+    }
+    html += "</tr></thead><tbody>";
+    for (const row of rows) {
+      html += "<tr>";
+      for (const col of columns) {
+        const value = row[col];
+        html += `<td>${value !== undefined ? value : ""}</td>`;
+      }
+      html += "</tr>";
+    }
+    html += "</tbody></table>";
+    classifiedTableContainer.innerHTML = html;
+  }
+  runClassifyBtn.addEventListener("click", async () => {
+    if (!currentRows || currentRows.length === 0) {
+      classifyStatus.textContent = "Upload a CSV first.";
+      return;
+    }
+    if (!columnSelect.value) {
+      classifyStatus.textContent = "Select a column to classify.";
+      return;
+    }
+    if (!currentTopics || currentTopics.length === 0) {
+      classifyStatus.textContent = "Add at least one topic.";
+      return;
+    }
+    const model = modelSelect.value;
+    const batchSize = parseInt(batchSizeInput.value) || 10;
+    classifyStatus.textContent = "Running classification...";
+    classifiedTableContainer.innerHTML = "";
+    try {
+      const response = await fetch("/classify_rows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          column: columnSelect.value,
+          rows: currentRows,
+          topics: currentTopics,
+          model,
+          batch_size: batchSize
+        })
+      });
+      if (!response.ok) {
+        classifyStatus.textContent = `Server error: ${response.status}`;
+        return;
+      }
+      const result = await response.json();
+      if (!result.success) {
+        classifyStatus.textContent = result.error || "Unknown error.";
+        return;
+      }
+      classifiedRows = result.rows;
+      renderClassifiedTable(result.columns, result.rows);
+      classifyStatus.textContent = `Classified ${result.rows.length} rows.`;
+    } catch (err) {
+      classifyStatus.textContent = "Network or server error.";
+      console.error(err);
+    }
+  });
 
     function setStatus(message, type) {
       statusDiv.textContent = message;
