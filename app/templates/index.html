@@ -103,14 +103,46 @@
     </div>
 
     <div class="table-container" id="table-container"></div>
+
+    <hr />
+
+    <div class="row">
+      <label for="column-select"><strong>Column to classify:</strong></label>
+      <select id="column-select">
+        <option value="">-- Upload a CSV first --</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <strong>Topics</strong> (add, edit, or remove as needed):
+      <button id="add-topic-btn" style="margin-left:1em;">Add Topic</button>
+    </div>
+
+    <div class="table-container" id="topics-container"></div>
+
+    <div class="row">
+      <button id="build-prompt-btn">Build LangChain Pydantic prompt</button>
+    </div>
+
+    <div class="row">
+      <label for="prompt-output"><strong>Generated prompt:</strong></label>
+      <textarea id="prompt-output" rows="8" style="width: 100%; font-family: monospace;"></textarea>
+    </div>
   </div>
 
   <script>
-    const fileInput = document.getElementById("csv-file");
-    const uploadBtn = document.getElementById("upload-btn");
-    const statusDiv = document.getElementById("status");
-    const tableContainer = document.getElementById("table-container");
-    const summary = document.getElementById("summary");
+  const fileInput = document.getElementById("csv-file");
+  const uploadBtn = document.getElementById("upload-btn");
+  const statusDiv = document.getElementById("status");
+  const tableContainer = document.getElementById("table-container");
+  const summary = document.getElementById("summary");
+  const columnSelect = document.getElementById("column-select");
+  const addTopicBtn = document.getElementById("add-topic-btn");
+  const buildPromptBtn = document.getElementById("build-prompt-btn");
+  const promptOutput = document.getElementById("prompt-output");
+  let currentColumns = [];
+  let currentRows = [];
+  let currentTopics = [];
 
     function setStatus(message, type) {
       statusDiv.textContent = message;
@@ -120,7 +152,7 @@
       }
     }
 
-    function renderTable(columns, rows) {
+  function renderTable(columns, rows) {
       if (!columns || columns.length === 0) {
         tableContainer.innerHTML = "<p>No data to display.</p>";
         return;
@@ -145,7 +177,53 @@
       tableContainer.innerHTML = html;
     }
 
-    uploadBtn.addEventListener("click", async () => {
+    function renderTopics(topics) {
+      const container = document.getElementById("topics-container");
+      if (!topics || topics.length === 0) {
+        container.innerHTML = "<p>No topics yet. Add one!</p>";
+        return;
+      }
+
+      let html = "<table><thead><tr>";
+      html += "<th>Topic ID</th><th>Label</th><th>Description</th><th>Actions</th>";
+      html += "</tr></thead><tbody>";
+
+      for (let i = 0; i < topics.length; i++) {
+        const t = topics[i];
+        html += `<tr data-idx="${i}">`;
+        html += `<td><input type="number" min="1" value="${t.id ?? ''}" class="topic-id-input" style="width:4em;"></td>`;
+        html += `<td><input type="text" value="${t.label ?? ''}" class="topic-label-input"></td>`;
+        html += `<td><input type="text" value="${t.description ?? ''}" class="topic-desc-input" style="width:100%"></td>`;
+        html += `<td><button class="remove-topic-btn">Remove</button></td>`;
+        html += "</tr>";
+      }
+
+      html += "</tbody></table>";
+      container.innerHTML = html;
+
+      // Wire up remove buttons
+      container.querySelectorAll('.remove-topic-btn').forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          currentTopics.splice(idx, 1);
+          renderTopics(currentTopics);
+        });
+      });
+
+      // Wire up input changes
+      container.querySelectorAll('tr[data-idx]').forEach((row, idx) => {
+        row.querySelector('.topic-id-input').addEventListener('input', e => {
+          currentTopics[idx].id = parseInt(e.target.value) || '';
+        });
+        row.querySelector('.topic-label-input').addEventListener('input', e => {
+          currentTopics[idx].label = e.target.value;
+        });
+        row.querySelector('.topic-desc-input').addEventListener('input', e => {
+          currentTopics[idx].description = e.target.value;
+        });
+      });
+    }
+
+  uploadBtn.addEventListener("click", async () => {
       const file = fileInput.files[0];
       if (!file) {
         setStatus("Please choose a CSV file first.", "error");
@@ -179,12 +257,82 @@
           setStatus("CSV parsed successfully.", "success");
           renderTable(result.columns, result.rows);
           summary.textContent = `Showing first ${result.rows.length} rows out of ${result.row_count} total rows.`;
+
+          currentColumns = result.columns || [];
+          currentRows = result.rows || [];
+
+          // Populate column dropdown
+          columnSelect.innerHTML = "";
+          if (currentColumns.length === 0) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = "-- No columns found --";
+            columnSelect.appendChild(opt);
+          } else {
+            for (const col of currentColumns) {
+              const opt = document.createElement("option");
+              opt.value = col;
+              opt.textContent = col;
+              columnSelect.appendChild(opt);
+            }
+          }
+
+          // Reset topics and prompt
+          currentTopics = [];
+          renderTopics(currentTopics);
+          promptOutput.value = "";
         }
       } catch (err) {
         setStatus("Network or server error. Check the console.", "error");
         console.error(err);
       } finally {
         uploadBtn.disabled = false;
+      }
+    });
+
+
+    addTopicBtn.addEventListener('click', () => {
+      // Add a new topic with next available id
+      const nextId = (currentTopics.length > 0)
+        ? Math.max(...currentTopics.map(t => t.id || 0)) + 1
+        : 1;
+      currentTopics.push({ id: nextId, label: '', description: '' });
+      renderTopics(currentTopics);
+    });
+
+    buildPromptBtn.addEventListener("click", async () => {
+      if (!currentTopics || currentTopics.length === 0) {
+        setStatus("Add at least one topic first.", "error");
+        return;
+      }
+
+      setStatus("Building LangChain Pydantic parser prompt…", null);
+
+      try {
+        const response = await fetch("/build_prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topics: currentTopics,
+          }),
+        });
+
+        if (!response.ok) {
+          setStatus(`Server error building prompt: ${response.status}`, "error");
+          return;
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          setStatus(result.error || "Unknown error building prompt.", "error");
+          return;
+        }
+
+        promptOutput.value = result.prompt || "";
+        setStatus("Prompt built successfully.", "success");
+      } catch (err) {
+        console.error(err);
+        setStatus("Network or server error while building prompt.", "error");
       }
     });
   </script>
