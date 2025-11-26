@@ -8,5 +8,6 @@ scikit-learn
 matplotlib
 seaborn
 wordcloud
+sentence-transformers
 langchain
 openai

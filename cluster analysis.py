@@ -2,9 +2,11 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from wordcloud import WordCloud
+from sentence_transformers import SentenceTransformer
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import numpy as np
 
 def main():
     # Load the dataset
@@ -29,32 +31,44 @@ def main():
     # Combine reviews for clustering
     df['Review_Text'] = df['Negative_Review'].fillna('') + " " + df['Positive_Review'].fillna('')
 
-    # Vectorization
-    print("Vectorizing text...")
-    vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-    X = vectorizer.fit_transform(df['Review_Text'])
+    # Vectorization (Embeddings)
+    print("Generating embeddings using SentenceTransformer...")
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    X = model.encode(df['Review_Text'].tolist())
 
     # Clustering
-    k = 5  # Number of clusters
+    k = 7  # Number of clusters
     print(f"Performing K-Means clustering with k={k}...")
     kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
     df['Cluster'] = kmeans.fit_predict(X)
 
     # Analyze clusters
     print("\nAnalyzing clusters...")
-    order_centroids = kmeans.cluster_centers_.argsort()[:, ::-1]
-    terms = vectorizer.get_feature_names_out()
     
     # Calculate distances to cluster centers to find representative reviews
     distances = kmeans.transform(X)
+    
+    # Extract keywords per cluster using TF-IDF on grouped text
+    print("Extracting keywords per cluster...")
+    cluster_docs = []
+    for i in range(k):
+        cluster_text = " ".join(df[df['Cluster'] == i]['Review_Text'])
+        cluster_docs.append(cluster_text)
+    
+    tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+    tfidf_matrix = tfidf_vectorizer.fit_transform(cluster_docs)
+    feature_names = tfidf_vectorizer.get_feature_names_out()
     
     with open('cluster_topics.txt', 'w', encoding='utf-8') as f:
         for i in range(k):
             # Get cluster size
             cluster_size = len(df[df['Cluster'] == i])
             
-            # Get top terms (increased to 20)
-            top_terms = [terms[ind] for ind in order_centroids[i, :20]]
+            # Get top terms for this cluster from TF-IDF
+            # We look at the row corresponding to cluster i in the tfidf_matrix
+            cluster_tfidf_scores = tfidf_matrix[i].toarray().flatten()
+            top_term_indices = cluster_tfidf_scores.argsort()[::-1][:20]
+            top_terms = [feature_names[ind] for ind in top_term_indices]
             terms_str = ", ".join(top_terms)
             
             # Get representative reviews (closest to centroid)
