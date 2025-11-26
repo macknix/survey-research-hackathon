@@ -40,6 +40,7 @@ def main():
     kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
     df['Cluster'] = kmeans.fit_predict(X)
 
+
     # Analyze clusters
     print("\nAnalyzing clusters...")
     order_centroids = kmeans.cluster_centers_.argsort()[:, ::-1]
