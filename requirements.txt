@@ -3,3 +3,7 @@ uvicorn[standard]
 python-multipart
 pandas
 jinja2
+scikit-learn
+matplotlib
+seaborn
+wordcloud
