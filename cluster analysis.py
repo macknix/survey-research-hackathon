@@ -36,6 +36,7 @@ def main():
     model = SentenceTransformer('all-MiniLM-L6-v2')
     X = model.encode(df['Review_Text'].tolist())
 
+
     # Clustering
     k = 7  # Number of clusters
     print(f"Performing K-Means clustering with k={k}...")
