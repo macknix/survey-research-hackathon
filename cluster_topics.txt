@@ -1,40 +1,40 @@
-Cluster 0 (Size: 452 reviews)
-Top Terms: room, hotel, bed, staff, nice, rooms, building, didn, bathroom, location, stay, good, beautiful, night, clean, shower, comfy, like, service, lovely
+Cluster 0 (Size: 243 reviews)
+Top Terms: negative, young, generally, good, gone, going, gluten, glasses, glass, given, girlfriend, girl, getting, gets, gesture, george, general, forgotten, gel, gave
 Representative Reviews:
-  1. Nothing   everything
-  2. Nothing  Everything
-  3. Everything was splendid
+  1. No Negative
+  2. No Negative
+  3. No Negative
 --------------------------------------------------
 
-Cluster 1 (Size: 142 reviews)
-Top Terms: staff, friendly, helpful, room, breakfast, location, clean, nice, excellent, good, hotel, comfortable, great, bar, efficient, lovely, garden, polite, rooms, quiet
+Cluster 1 (Size: 73 reviews)
+Top Terms: small, room, bathroom, rooms, bit, london, pretty, toilet, bathrooms, standard, people, little, bed, far, executive, double, really, levels, high, walls
 Representative Reviews:
-  1. The staff were so friendly and very helpful
-  2. staff could be more friendly
-  3. Location very good Staff very helpful Breakfast Excellant
+  1. Very small room
+  2. The room was too small
+  3. The room is relatively small
 --------------------------------------------------
 
-Cluster 2 (Size: 160 reviews)
-Top Terms: good, location, excellent, tube, station, court, close, breakfast, quiet, hotel, london, nice, earl, room, earls, restaurants, clean, staff, comfortable, underground
+Cluster 2 (Size: 115 reviews)
+Top Terms: hotel, little, staff, restaurant, room, breakfast, renovation, expensive, booking, construction, food, service, reception, bit, centre, didn, bar, far, night, helpful
 Representative Reviews:
-  1. Very pleasant hotel Excellent staff Good very quiet location 200 yds to Earls Court tube station
-  2. Excellent location Nice and quiet with easy access to the Earl s Court Tube station
-  3. the hotel is in a quiet neighborhood very close to the earl s court tube station great breakfast very nice staff clean and comfotable
+  1. Breakfast was a little disorganised staff a little inattentive Decent selection however of food
+  2. The hotel is a little out of the main town but accessible by tram The hotel restaurant was a little disappointing the food was great but we waited too long for it due to waiting staff prioritising large groups
+  3. Little room
 --------------------------------------------------
 
-Cluster 3 (Size: 80 reviews)
-Top Terms: great, hotel, location, staff, comfortable, beds, room, lovely, clean, stay, breakfast, london, helpful, rooms, really, little, bed, excellent, small, beautiful
+Cluster 3 (Size: 215 reviews)
+Top Terms: room, cold, hot, hotel, floor, did, bed, night, bathroom, shower, windows, didn, work, really, noise, wasn, stairs, building, heating, rooms
 Representative Reviews:
-  1. Great location great staff comfortable rooms
-  2. Great hotel and staff
-  3. Great location
+  1. At first glance it looks like a dream hotel But then when you go see the hotel renovated and under construction which was not mentioned to us in advance Importantly they did not hear the construction work but ideally they indicate the presence of this order Even the room itself looked like dreams a ...
+  2. I am so angry that i made this post available via all possible sites i use when planing my trips so no one will make the mistake of booking this place I made my booking via booking com We stayed for 6 nights in this hotel from 11 to 17 July Upon arrival we were placed in a small room on the 2nd floo...
+  3. The standard room was really too small so they offered to upgrade us to a bigger room We really appreciated that because we were going to spend 6 days in that hotel But even the bigger room is not that big however we realized that this is the case in nearly all London hotels The room did not have ce...
 --------------------------------------------------
 
-Cluster 4 (Size: 166 reviews)
-Top Terms: room, breakfast, small, garden, location, good, bathroom, little, buffet, service, cold, bit, nice, quite, rooms, bed, really, perfect, coffee, comfortable
+Cluster 4 (Size: 354 reviews)
+Top Terms: breakfast, good, bathroom, didn, rooms, construction, bit, bed, shower, door, like, service, work, bad, coffee, poor, really, better, night, expensive
 Representative Reviews:
-  1. Room too small  Location good
-  2. Room and bathroom very small  Loved the garden good breakfast
-  3. Room was small bathroom very small Breakfast room too small people had to queue every morning Coffee and tea not up to standard Breakfast buffet was good   Location was great lots of nice pubs and restaurants nearby very close to underground easy to get to from heathrow excellent bed
+  1. Nothing
+  2. nothing
+  3. Nothing
 --------------------------------------------------
 

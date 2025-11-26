@@ -104,7 +104,18 @@
 
     <div class="table-container" id="table-container"></div>
 
+
     <hr />
+
+    <div class="row">
+      <label for="n-clusters"><strong>Number of clusters:</strong></label>
+      <input type="number" id="n-clusters" min="2" max="20" value="5" style="width:4em; margin-right:1em;">
+      <button id="run-clustering-btn">Run Clustering &amp; Show Plot</button>
+      <span id="clustering-status" style="margin-left:1em;"></span>
+    </div>
+    <div class="row">
+      <img id="clustering-plot" src="" alt="Cluster Wordclouds" style="display:none; max-width:100%; border:1px solid #ccc; border-radius:6px;" />
+    </div>
 
     <div class="row">
       <label for="column-select"><strong>Column to classify:</strong></label>
@@ -152,6 +163,47 @@
   </div>
 
   <script>
+  // --- CLUSTERING UI ---
+  const runClusteringBtn = document.getElementById("run-clustering-btn");
+  const clusteringStatus = document.getElementById("clustering-status");
+  const clusteringPlot = document.getElementById("clustering-plot");
+
+  runClusteringBtn.addEventListener("click", async () => {
+    const file = fileInput.files[0];
+    const nClustersInput = document.getElementById("n-clusters");
+    const nClusters = parseInt(nClustersInput.value) || 5;
+    if (!file) {
+      clusteringStatus.textContent = "Please choose a CSV file first.";
+      return;
+    }
+    if (!columnSelect.value) {
+      clusteringStatus.textContent = "Select a column to cluster.";
+      return;
+    }
+    clusteringStatus.textContent = "Running clustering...";
+    clusteringPlot.style.display = "none";
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("column", columnSelect.value);
+    formData.append("n_clusters", nClusters);
+    try {
+      const response = await fetch("/run_clustering", {
+        method: "POST",
+        body: formData
+      });
+      const result = await response.json();
+      if (!result.success) {
+        clusteringStatus.textContent = result.error || "Clustering failed.";
+        return;
+      }
+      clusteringStatus.textContent = "Clustering complete!";
+      clusteringPlot.src = result.plot_url + "?t=" + Date.now(); // bust cache
+      clusteringPlot.style.display = "block";
+    } catch (err) {
+      clusteringStatus.textContent = "Network or server error.";
+      console.error(err);
+    }
+  });
   const fileInput = document.getElementById("csv-file");
   const uploadBtn = document.getElementById("upload-btn");
   const statusDiv = document.getElementById("status");

@@ -1,5 +1,5 @@
-from fastapi import FastAPI, File, UploadFile, Request, Body
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, File, UploadFile, Request, Body, Form
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import io
@@ -8,8 +8,55 @@ import requests
 import json
 from typing import List, Optional
 from pydantic import BaseModel
+import shutil
+import os
+
+
+# Import clustering function
+import sys
+import importlib.util
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Dynamically import clustering from 'cluster analysis.py'
+cluster_module_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'cluster analysis.py')
+spec = importlib.util.spec_from_file_location('cluster_analysis', cluster_module_path)
+cluster_analysis = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(cluster_analysis)
+clustering = cluster_analysis.clustering
 
 app = FastAPI()
+from fastapi import BackgroundTasks
+# --- CLUSTERING ENDPOINT ---
+# This endpoint receives a CSV file and column name, runs clustering, and returns the plot filename
+@app.post("/run_clustering")
+async def run_clustering(
+    file: UploadFile = File(...),
+    column: str = Form(...),
+    n_clusters: int = Form(5),
+    background_tasks: BackgroundTasks = None
+):
+    # Save uploaded file to a temp location
+    temp_path = f"/tmp/{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Run clustering (this will generate clusters_wordclouds_comparison.png in the root)
+    try:
+        clustering(temp_path, column, n_clusters)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+    # Move the generated plot to static folder for serving
+    src_plot = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "clusters_wordclouds_comparison.png")
+    static_plot = os.path.join(os.path.dirname(__file__), "static", "clusters_wordclouds_comparison.png")
+    try:
+        shutil.move(src_plot, static_plot)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": f"Plot move failed: {e}"})
+
+    # Optionally, cleanup temp file
+    background_tasks.add_task(os.remove, temp_path)
+
+    return {"success": True, "plot_url": "/static/clusters_wordclouds_comparison.png"}
 
 # Templates and static files (for our single page)
 templates = Jinja2Templates(directory="app/templates")
